@@ -2,5 +2,4 @@ fastapi
 uvicorn
 selenium
 pandas
-numpy
 lxml
