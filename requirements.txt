@@ -1,5 +1,4 @@
 fastapi
 uvicorn
-selenium
 pandas
-lxml
+requests

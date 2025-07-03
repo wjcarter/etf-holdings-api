@@ -1,33 +1,19 @@
 FROM python:3.12-slim
 
-# Install required dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    wget \
-    gnupg \
-    unzip \
-    xvfb \
-    firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
-# Install GeckoDriver
-RUN GECKODRIVER_VERSION=$(curl -sL https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
-    curl -sL -o geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz" && \
-    tar -xzf geckodriver.tar.gz && \
-    mv geckodriver /usr/local/bin/ && \
-    chmod +x /usr/local/bin/geckodriver && \
-    rm geckodriver.tar.gz
-    
-# Set environment variables
-ENV DISPLAY=:99
+# Set working directory
+WORKDIR /app
 
-# Install Python deps
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Add code
-COPY . /app
-WORKDIR /app
+# Copy app code
+COPY . .
 
-# Run using Xvfb to simulate a display
-CMD ["sh", "-c", "Xvfb :99 & uvicorn main:app --host 0.0.0.0 --port 8000"]
+# Run FastAPI app with Uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
