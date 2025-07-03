@@ -1,27 +1,28 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    firefox-esr \
-    wget \
+    curl \
     gnupg \
+    firefox-esr \
     unzip \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
-# Install geckodriver
-RUN wget -q https://github.com/mozilla/geckodriver/releases/latest/download/geckodriver-linux64.tar.gz \
-    && tar -xzf geckodriver-linux64.tar.gz -C /usr/local/bin \
-    && rm geckodriver-linux64.tar.gz
+# Install geckodriver manually (fixed)
+RUN curl -L -f -o geckodriver.tar.gz https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz \
+    && tar -xzf geckodriver.tar.gz \
+    && mv geckodriver /usr/local/bin/ \
+    && rm geckodriver.tar.gz
 
-# Set working directory
+# Create app directory
 WORKDIR /app
 
-# Copy files
-COPY . /app
-
-# Install Python dependencies
+# Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port and run
-EXPOSE 8000
+# Copy app code
+COPY . .
+
+# Run the API
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
