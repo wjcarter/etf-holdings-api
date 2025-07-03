@@ -1,28 +1,32 @@
 FROM python:3.12-slim
 
-# Install system dependencies
+# Install required dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    wget \
     gnupg \
-    firefox-esr \
     unzip \
+    xvfb \
+    firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
-# Install geckodriver manually (fixed)
-RUN curl -L -f -o geckodriver.tar.gz https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz \
-    && tar -xzf geckodriver.tar.gz \
-    && mv geckodriver /usr/local/bin/ \
-    && rm geckodriver.tar.gz
+# Install GeckoDriver
+RUN GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep '"tag_name":' | cut -d'"' -f4) && \
+    wget -q "https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz" && \
+    tar -xzf geckodriver-*.tar.gz -C /usr/local/bin && \
+    chmod +x /usr/local/bin/geckodriver && \
+    rm geckodriver-*.tar.gz
 
-# Create app directory
-WORKDIR /app
+# Set environment variables
+ENV DISPLAY=:99
 
-# Install dependencies
+# Install Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
-COPY . .
+# Add code
+COPY . /app
+WORKDIR /app
 
-# Run the API
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run using Xvfb to simulate a display
+CMD ["sh", "-c", "Xvfb :99 & uvicorn main:app --host 0.0.0.0 --port 8000"]
