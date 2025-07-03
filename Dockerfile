@@ -11,12 +11,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GeckoDriver
-RUN GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep '"tag_name":' | cut -d'"' -f4) && \
-    wget -q "https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz" && \
-    tar -xzf geckodriver-*.tar.gz -C /usr/local/bin && \
+RUN GECKODRIVER_VERSION=$(curl -sL https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') && \
+    curl -sL -o geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz" && \
+    tar -xzf geckodriver.tar.gz && \
+    mv geckodriver /usr/local/bin/ && \
     chmod +x /usr/local/bin/geckodriver && \
-    rm geckodriver-*.tar.gz
-
+    rm geckodriver.tar.gz
+    
 # Set environment variables
 ENV DISPLAY=:99
 
